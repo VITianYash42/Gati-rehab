@@ -20,7 +20,8 @@ import {
   Zap,
   Star,
   ShieldCheck,
-  MessageSquare
+  MessageSquare,
+  Terminal
 } from 'lucide-react';
 import NavHeader from '../../../shared/components/NavHeader';
 import SessionReport from '../components/SessionReport';
@@ -133,6 +134,13 @@ const PatientDashboard = () => {
           </div>
 
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate('/workout', { state: { devMode: true } })}
+              className="hidden sm:flex items-center gap-2 bg-blue-600/10 text-blue-600 px-6 py-4 rounded-[1.5rem] border border-blue-200 font-bold hover:bg-blue-600 hover:text-white transition-all shadow-lg shadow-blue-600/5 group"
+            >
+              <Terminal className="w-5 h-5" />
+              <span>Launch Neural Lab</span>
+            </button>
             <button className="bg-white p-4 rounded-3xl border border-slate-100 text-slate-400 hover:text-blue-600 transition-all shadow-xl shadow-slate-200/50 relative group">
               <Bell className="w-6 h-6 transition-transform group-hover:rotate-12" />
               <span className="absolute top-4 right-4 w-3 h-3 bg-rose-500 rounded-full border-2 border-white shadow-sm"></span>

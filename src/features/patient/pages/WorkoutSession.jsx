@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
   Play,
@@ -11,7 +11,10 @@ import {
   Activity,
   Timer,
   BarChart3,
-  Award
+  Award,
+  Terminal,
+  FlaskConical,
+  ChevronDown
 } from 'lucide-react';
 import AIEngine from '../../ai/components/AIEngine';
 import NavHeader from '../../../shared/components/NavHeader';
@@ -22,10 +25,11 @@ import { getVisualFeedbackStyle } from '../../ai/utils/realTimeFeedback';
 
 const WorkoutSession = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
 
   const [sessionActive, setSessionActive] = useState(false);
-  const [currentExercise] = useState('Knee Bends');
+  const [currentExercise, setCurrentExercise] = useState('knee-bends');
   const [repCount, setRepCount] = useState(0);
   const [currentAngle, setCurrentAngle] = useState(0);
   const [feedback, setFeedback] = useState('Position yourself in front of the camera');
@@ -34,6 +38,16 @@ const WorkoutSession = () => {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [frameData, setFrameData] = useState([]);
   const [realTimeFeedback, setRealTimeFeedback] = useState(null);
+  const [isDevMode, setIsDevMode] = useState(location.state?.devMode || false);
+
+  const availableExercises = [
+    { id: 'knee-bends', name: 'Knee Bends' },
+    { id: 'leg-raises', name: 'Leg Raises' },
+    { id: 'hip-flexion', name: 'Hip Flexion' },
+    { id: 'shoulder-raises', name: 'Shoulder Raises' },
+    { id: 'elbow-flexion', name: 'Elbow Flexion' },
+    { id: 'standing-march', name: 'Standing March' }
+  ];
 
   const timerRef = useRef(null);
   const previousPhaseRef = useRef('start');
@@ -68,15 +82,29 @@ const WorkoutSession = () => {
 
   // Detect when a rep is completed
   const detectRepCompletion = (angles) => {
-    const kneeAngle = Math.min(angles.leftKnee || 180, angles.rightKnee || 180);
+    // Dynamic joint selection based on exercise
+    let primaryAngle = 180;
+    let thresholdLow = 100;
+    let thresholdHigh = 155;
 
-    // Logic for Knee Bends: Flexion (< 100) -> Extension (> 150)
-    if (kneeAngle < 100 && previousPhaseRef.current !== 'flexed') {
-      previousPhaseRef.current = 'flexed';
-    } else if (kneeAngle > 155 && previousPhaseRef.current === 'flexed') {
+    if (currentExercise.includes('knee')) {
+      primaryAngle = Math.min(angles.leftKnee || 180, angles.rightKnee || 180);
+    } else if (currentExercise.includes('hip') || currentExercise.includes('march') || currentExercise.includes('leg')) {
+      primaryAngle = Math.min(angles.leftHip || 180, angles.rightHip || 180);
+      thresholdLow = 110;
+      thresholdHigh = 160;
+    } else if (currentExercise.includes('shoulder')) {
+      primaryAngle = Math.max(angles.leftShoulder || 0, angles.rightShoulder || 0);
+      thresholdLow = 140; // Extension for status
+      thresholdHigh = 60; // Return
+    }
+
+    // Generic phase detection (Flexion -> Extension toggle)
+    if (primaryAngle < thresholdLow && previousPhaseRef.current !== 'low') {
+      previousPhaseRef.current = 'low';
+    } else if (primaryAngle > thresholdHigh && previousPhaseRef.current === 'low') {
       setRepCount(prev => prev + 1);
-      previousPhaseRef.current = 'extended';
-      // Recalculate form quality every rep
+      previousPhaseRef.current = 'high';
       updateQualityScore();
     }
   };
@@ -176,8 +204,54 @@ const WorkoutSession = () => {
                 <span className="text-base sm:text-xl font-bold">{formQuality}%</span>
               </div>
             </div>
+
+            <button
+              onClick={() => setIsDevMode(!isDevMode)}
+              className={`flex flex-col items-center group transition-all ${isDevMode ? 'text-blue-400' : 'text-slate-500'}`}
+              title="Toggle Developer Labs"
+            >
+              <span className="text-[8px] uppercase tracking-widest font-black mb-1 group-hover:text-blue-400">Dev Labs</span>
+              <div className={`p-2 rounded-xl border transition-all ${isDevMode ? 'bg-blue-500/10 border-blue-500/50 shadow-lg shadow-blue-500/20' : 'bg-slate-800/50 border-slate-700'}`}>
+                <Terminal className="w-4 h-4" />
+              </div>
+            </button>
           </div>
         </div>
+
+        {isDevMode && (
+          <div className="mb-8 p-6 bg-slate-900 border border-blue-500/30 rounded-[2rem] shadow-2xl shadow-blue-900/20 animate-in fade-in slide-in-from-top-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center">
+                  <FlaskConical className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-white font-black text-lg">Model AI Tester</h3>
+                  <p className="text-slate-400 text-xs font-bold">Switch models for real-time validation</p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                {availableExercises.map((ex) => (
+                  <button
+                    key={ex.id}
+                    onClick={() => {
+                      setCurrentExercise(ex.id);
+                      setRepCount(0);
+                      setFrameData([]);
+                    }}
+                    className={`px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${currentExercise === ex.id
+                      ? 'bg-blue-600 text-white shadow-xl shadow-blue-600/30 border border-blue-400'
+                      : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'
+                      }`}
+                  >
+                    {ex.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Main Viewport */}

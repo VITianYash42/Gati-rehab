@@ -165,12 +165,12 @@ const LoginPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
         {/* Logo & Title */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
-            <Activity className="w-8 h-8 text-white" />
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-24 h-24 bg-white rounded-[2rem] mb-6 shadow-2xl border border-slate-50 overflow-hidden p-2">
+            <img src="/logo.png" alt="Gati Logo" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Gati Rehab</h1>
-          <p className="text-gray-600 mt-2">AI-Powered Virtual Rehab Assistant</p>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tighter leading-none mb-2">GATI<span className="text-blue-600">REHAB</span></h1>
+          <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Neural Recovery Intelligence</p>
         </div>
 
         {/* Auth Mode: Email/Password Login */}

@@ -6,15 +6,18 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import AppRoutes from './routes';
 import { AuthProvider } from '../features/auth/context/AuthContext';
 import PWAInstallPrompt from '../shared/components/PWAInstallPrompt';
+import ErrorBoundary from '../shared/components/ErrorBoundary';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <AppRoutes />
-        <PWAInstallPrompt />
-      </Router>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <Router>
+          <AppRoutes />
+          <PWAInstallPrompt />
+        </Router>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

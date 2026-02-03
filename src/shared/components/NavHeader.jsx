@@ -30,8 +30,8 @@ const NavHeader = ({ userType = 'patient', doctorProfile = null, onSettingsClick
           {/* Logo/Brand */}
           <div className="flex items-center gap-3 sm:gap-4 cursor-pointer group" onClick={() => navigate('/')}>
             <div className="relative scale-90 sm:scale-100">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-900 rounded-[1rem] sm:rounded-[1.25rem] flex items-center justify-center shadow-xl shadow-slate-200 group-hover:scale-105 transition-transform duration-500">
-                <Activity className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-[1rem] sm:rounded-[1.25rem] flex items-center justify-center shadow-xl shadow-slate-200 group-hover:scale-105 transition-transform duration-500 overflow-hidden border border-slate-100 p-1">
+                <img src="/logo.png" alt="Gati Logo" className="w-full h-full object-contain" />
               </div>
               <div className="absolute -top-1 -right-1 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-blue-500 rounded-full border-2 border-white shadow-sm flex items-center justify-center">
                 <Zap className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-white fill-current" />
