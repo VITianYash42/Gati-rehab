@@ -175,20 +175,21 @@ const WorkoutSession = () => {
   const feedbackStyle = realTimeFeedback ? getVisualFeedbackStyle(realTimeFeedback.visualCue) : {};
 
   return (
-    <div className="min-h-screen bg-[#0F172A] text-white">
+    <div className="min-h-screen bg-[#0F172A] text-white pb-28">
       <NavHeader userType="patient" theme="dark" />
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <main role="main" className="max-w-7xl mx-auto px-4 py-6">
         {/* Header with Stats */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
           <button
             onClick={() => navigate('/patient-dashboard')}
-            className="p-2.5 bg-slate-800/50 rounded-xl border border-slate-700/50 text-slate-400 active:scale-90 transition-all"
+            className="p-2.5 w-10 h-10 bg-slate-800/50 rounded-xl border border-slate-700/50 text-slate-400 active:scale-90 transition-all"
+            aria-label="Back to dashboard"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-2 flex-wrap">
             <div className="bg-slate-900/80 border border-white/5 px-3 py-1.5 rounded-lg flex items-center gap-2">
               <Timer className="w-3 h-3 text-blue-400" />
               <span className="text-sm font-mono font-bold tracking-tight">{formatTime(elapsedTime)}</span>
@@ -201,14 +202,15 @@ const WorkoutSession = () => {
 
           <button
             onClick={() => setIsDevMode(!isDevMode)}
-            className={`p-2.5 rounded-xl border transition-all active:scale-90 ${isDevMode ? 'bg-blue-600 text-white' : 'bg-slate-800/50 text-slate-500 border-slate-700/50'}`}
+            className={`hidden sm:inline-flex p-2.5 rounded-xl border transition-all active:scale-90 self-start sm:self-auto ${isDevMode ? 'bg-blue-600 text-white' : 'bg-slate-800/50 text-slate-500 border-slate-700/50'}`}
+            aria-label="Toggle developer mode"
           >
             <Terminal className="w-5 h-5" />
           </button>
         </div>
 
         {isDevMode && (
-          <div className="mb-4 p-3 bg-slate-900/50 border border-white/5 rounded-2xl animate-in fade-in slide-in-from-top-2">
+          <div className="hidden sm:block mb-4 p-3 bg-slate-900/50 border border-white/5 rounded-2xl animate-in fade-in slide-in-from-top-2">
             <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1">
               <div className="flex items-center gap-2 px-3 py-2 bg-blue-600/10 border border-blue-500/20 rounded-lg shrink-0">
                 <FlaskConical className="w-3.5 h-3.5 text-blue-400" />
@@ -237,7 +239,7 @@ const WorkoutSession = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Main Viewport */}
           <div className="lg:col-span-3 space-y-6">
-            <div className="relative rounded-[2.5rem] overflow-hidden border border-white/5 bg-slate-950 aspect-[4/5] sm:aspect-video flex items-center justify-center shadow-inner group">
+            <div className="relative rounded-[2rem] sm:rounded-[2.5rem] border border-white/5 bg-slate-950 shadow-inner group">
               {/* Visual Feedback Overlay Border */}
               <div
                 className="absolute inset-0 pointer-events-none z-20 transition-all duration-300"
@@ -247,36 +249,24 @@ const WorkoutSession = () => {
                 }}
               ></div>
 
-              <div className="w-full h-full scale-[1.02]">
-                <AIEngine onPoseDetected={handlePoseDetected} exerciseType={currentExercise} />
+              <div className="w-full h-full scale-100 md:scale-[1.01] lg:scale-[1.02]">
+                <AIEngine
+                  onPoseDetected={handlePoseDetected}
+                  exerciseType={currentExercise}
+                  repCount={repCount}
+                />
               </div>
 
-              {/* Status Info Overlays */}
-              <div className="absolute top-4 left-4 z-20">
-                <div className="bg-blue-600/90 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-full shadow-lg border border-white/10">
-                  {currentExercise.replace('-', ' ')}
-                </div>
-              </div>
+            </div>
 
-              {/* Rep Count Overlay - Minimalist */}
-              <div className="absolute top-4 right-4 z-20 flex flex-col items-center">
-                <div className="bg-slate-900/90 backdrop-blur-md border border-white/10 rounded-2xl p-3 flex flex-col items-center min-w-[65px] shadow-2xl">
-                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Reps</span>
-                  <span className="text-3xl font-black text-blue-500 leading-none">{repCount}</span>
-                </div>
+            {/* Feedback Card */}
+            <div className="mt-3 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 shadow-2xl flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${realTimeFeedback?.severity === 'error' ? 'bg-rose-500/20 text-rose-500' : 'bg-blue-500/20 text-blue-400'}`}>
+                <Activity className="w-4 h-4 animate-pulse" />
               </div>
-
-              {/* Feedback Overlay - Bottom Center Floating */}
-              <div className="absolute bottom-6 left-4 right-4 z-20 flex justify-center">
-                <div className="bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 shadow-2xl flex items-center gap-3 w-full max-w-[320px] transition-all transform animate-in fade-in slide-in-from-bottom-2">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${realTimeFeedback?.severity === 'error' ? 'bg-rose-500/20 text-rose-500' : 'bg-blue-500/20 text-blue-400'}`}>
-                    <Activity className="w-4 h-4 animate-pulse" />
-                  </div>
-                  <p className="text-[13px] font-bold text-white leading-tight">
-                    {feedback}
-                  </p>
-                </div>
-              </div>
+              <p className="text-[13px] font-bold text-white leading-tight">
+                {feedback}
+              </p>
             </div>
 
             {/* Controls */}
@@ -311,11 +301,11 @@ const WorkoutSession = () => {
           </div>
 
           {/* Metrics - More compact for mobile */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="hidden lg:grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-slate-900/50 rounded-2xl border border-white/5 p-4 flex flex-col justify-center">
               <div className="flex justify-between items-end mb-2">
                 <div>
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Live Feed</p>
+                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none mb-1">Live Feed</p>
                   <p className="text-xs font-bold text-slate-300">Joint Angle</p>
                 </div>
                 <span className="text-2xl font-black text-blue-400">{currentAngle}°</span>
@@ -328,7 +318,7 @@ const WorkoutSession = () => {
             <div className="bg-slate-900/50 rounded-2xl border border-white/5 p-4 flex flex-col justify-center">
               <div className="flex justify-between items-end mb-2">
                 <div>
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Neural AI</p>
+                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none mb-1">Neural AI</p>
                   <p className="text-xs font-bold text-slate-300">Form Quality</p>
                 </div>
                 <span className="text-2xl font-black text-emerald-400">{formQuality}%</span>
@@ -339,7 +329,7 @@ const WorkoutSession = () => {
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

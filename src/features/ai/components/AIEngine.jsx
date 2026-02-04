@@ -8,7 +8,7 @@ import { Camera, Video, VideoOff, AlertCircle } from 'lucide-react';
 import { calculateAngles } from '../utils/angleCalculations';
 import { generateRealTimeFeedback, playAudioCue } from '../utils/realTimeFeedback';
 
-const AIEngine = ({ onPoseDetected, exerciseType, onFeedbackUpdate }) => {
+const AIEngine = ({ onPoseDetected, exerciseType, onFeedbackUpdate, repCount }) => {
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
   const [isModelLoaded, setIsModelLoaded] = useState(false);
@@ -234,23 +234,30 @@ const AIEngine = ({ onPoseDetected, exerciseType, onFeedbackUpdate }) => {
   };
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto">
+    <div className="relative w-full h-full max-w-2xl mx-auto flex flex-col min-h-0">
       {/* Camera Status */}
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Camera className="w-5 h-5 text-blue-600" />
-          <span className="text-sm font-medium">
+      <div className="mb-3 sm:mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <Camera className="w-5 h-5 text-blue-400" />
+            <span className="text-sm font-medium text-slate-200 truncate">
             {isModelLoaded ? 'AI Model Ready' : 'Loading AI Model...'}
           </span>
+          </div>
           {isCameraActive && (
-            <span className="text-xs text-gray-600 ml-2">
+            <span className="text-xs text-slate-400">
               FPS: {fps}
+            </span>
+          )}
+          {Number.isFinite(repCount) && (
+            <span className="text-xs font-bold text-blue-200 bg-blue-500/20 border border-blue-500/30 px-2.5 py-1 rounded-full">
+              Reps: {repCount}
             </span>
           )}
         </div>
         <button
           onClick={toggleCamera}
-          className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 ${isCameraActive
+          className={`w-full sm:w-auto px-3 sm:px-4 py-2 rounded-lg font-medium flex items-center justify-center gap-2 text-sm sm:text-base ${isCameraActive
               ? 'bg-red-500 hover:bg-red-600 text-white'
               : 'bg-blue-500 hover:bg-blue-600 text-white'
             }`}
@@ -271,13 +278,13 @@ const AIEngine = ({ onPoseDetected, exerciseType, onFeedbackUpdate }) => {
       </div>
 
       {/* Camera View */}
-      <div className="relative bg-gray-900 rounded-lg overflow-hidden shadow-xl">
+      <div className="relative bg-slate-900 rounded-lg overflow-hidden shadow-xl flex-1 min-h-0">
         {isCameraActive ? (
           <>
             <Webcam
               ref={webcamRef}
               audio={false}
-              className="w-full h-auto"
+              className="w-full h-full object-cover"
               screenshotFormat="image/jpeg"
               videoConstraints={{
                 facingMode: 'user',
@@ -292,11 +299,11 @@ const AIEngine = ({ onPoseDetected, exerciseType, onFeedbackUpdate }) => {
             />
           </>
         ) : (
-          <div className="aspect-video flex items-center justify-center bg-gray-800">
-            <div className="text-center text-white">
+          <div className="h-full min-h-0 sm:min-h-[200px] flex items-center justify-center bg-slate-800">
+            <div className="text-center text-slate-200">
               <Camera className="w-16 h-16 mx-auto mb-4 opacity-50" />
               <p className="text-lg">Camera is off</p>
-              <p className="text-sm text-gray-400 mt-2">
+              <p className="text-sm text-slate-400 mt-2">
                 Click "Start Camera" to begin
               </p>
             </div>
@@ -306,19 +313,19 @@ const AIEngine = ({ onPoseDetected, exerciseType, onFeedbackUpdate }) => {
 
       {/* Error Display */}
       {error && (
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+        <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-rose-500/10 border border-rose-500/30 rounded-lg flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-rose-400 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-medium text-red-900">Error:</p>
-            <p className="text-sm text-red-700">{error}</p>
+            <p className="font-medium text-rose-200">Error:</p>
+            <p className="text-sm text-rose-200/80">{error}</p>
           </div>
         </div>
       )}
 
       {/* Exercise Info */}
       {exerciseType && (
-        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm font-medium text-blue-900">
+        <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+          <p className="text-xs sm:text-sm font-medium text-blue-100">
             Current Exercise: <span className="font-bold">{exerciseType}</span>
           </p>
         </div>
