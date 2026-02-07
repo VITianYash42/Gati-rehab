@@ -1,8 +1,6 @@
 // LandingPage - Public splash/marketing page
-// This is the first page visitors see before logging in
-
 import { useNavigate } from 'react-router-dom';
-import { Activity, Smartphone, Wifi, Brain, Heart, TrendingUp, CheckCircle } from 'lucide-react';
+import { Activity, Smartphone, Wifi, Brain, Heart, TrendingUp, CheckCircle, ArrowRight } from 'lucide-react';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -30,6 +28,24 @@ const LandingPage = () => {
     },
   ];
 
+  const howItWorks = [
+    {
+      step: 1,
+      title: 'Sign Up',
+      desc: 'Create your account as a patient or doctor in seconds',
+    },
+    {
+      step: 2,
+      title: 'Start Session',
+      desc: 'Position your camera and begin your exercise routine',
+    },
+    {
+      step: 3,
+      title: 'Get Feedback',
+      desc: 'Receive real-time corrections and track your progress',
+    },
+  ];
+
   const benefits = [
     'Real-time form correction',
     'Personalized exercise routines',
@@ -51,7 +67,7 @@ const LandingPage = () => {
             </div>
             <button
               onClick={() => navigate('/login')}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all hover:shadow-lg active:scale-95"
             >
               Login / Sign Up
             </button>
@@ -62,8 +78,8 @@ const LandingPage = () => {
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 py-20">
         <div className="text-center max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full mb-6">
-            <Heart className="w-4 h-4" />
+          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full mb-6 animate-fade-in">
+            <Heart className="w-4 h-4 animate-pulse" />
             <span className="text-sm font-medium">AI-Powered Physical Therapy</span>
           </div>
           
@@ -82,7 +98,7 @@ const LandingPage = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => navigate('/login')}
-              className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-lg shadow-lg transition-transform transform hover:scale-105"
+              className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-lg shadow-lg hover:shadow-blue-500/30 transition-all transform hover:-translate-y-1"
             >
               Get Started Free
             </button>
@@ -91,7 +107,7 @@ const LandingPage = () => {
                 const featuresSection = document.getElementById('features');
                 featuresSection?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="px-8 py-4 bg-white hover:bg-gray-50 text-gray-900 font-semibold rounded-xl text-lg shadow-lg border-2 border-gray-200 transition-transform transform hover:scale-105"
+              className="px-8 py-4 bg-white hover:bg-gray-50 text-gray-900 font-semibold rounded-xl text-lg shadow-lg border-2 border-gray-200 transition-all transform hover:-translate-y-1"
             >
               Learn More
             </button>
@@ -99,15 +115,15 @@ const LandingPage = () => {
 
           {/* Stats */}
           <div className="grid grid-cols-3 gap-8 mt-16 max-w-2xl mx-auto">
-            <div>
+            <div className="p-4 rounded-2xl hover:bg-white/50 transition-colors">
               <p className="text-4xl font-bold text-blue-600">100%</p>
               <p className="text-sm text-gray-600 mt-1">Offline Capable</p>
             </div>
-            <div>
+            <div className="p-4 rounded-2xl hover:bg-white/50 transition-colors">
               <p className="text-4xl font-bold text-blue-600">33</p>
               <p className="text-sm text-gray-600 mt-1">Body Keypoints</p>
             </div>
-            <div>
+            <div className="p-4 rounded-2xl hover:bg-white/50 transition-colors">
               <p className="text-4xl font-bold text-blue-600">Free</p>
               <p className="text-sm text-gray-600 mt-1">Forever</p>
             </div>
@@ -131,9 +147,9 @@ const LandingPage = () => {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 hover:shadow-xl transition-shadow"
+                className="group bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
-                <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
+                <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <feature.icon className="w-6 h-6 text-white" />
                 </div>
                 <h4 className="text-xl font-bold text-gray-900 mb-2">
@@ -146,8 +162,8 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-20 bg-gradient-to-br from-indigo-50 to-blue-50">
+      {/* How It Works - Enhanced with Simple Animations */}
+      <section className="py-20 bg-gradient-to-br from-indigo-50 to-blue-50 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16">
             <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -157,40 +173,25 @@ const LandingPage = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
-                1
+            {howItWorks.map((item, index) => (
+              <div 
+                key={index} 
+                className="text-center group p-6 rounded-2xl transition-all duration-300 hover:bg-white hover:shadow-xl hover:-translate-y-2 cursor-default"
+              >
+                <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-6 shadow-lg shadow-blue-600/20 group-hover:scale-110 group-hover:bg-indigo-600 transition-all duration-300">
+                  {item.step}
+                </div>
+                <h4 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                  {item.title}
+                </h4>
+                <p className="text-gray-600">{item.desc}</p>
               </div>
-              <h4 className="text-xl font-bold text-gray-900 mb-2">Sign Up</h4>
-              <p className="text-gray-600">
-                Create your account as a patient or doctor in seconds
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
-                2
-              </div>
-              <h4 className="text-xl font-bold text-gray-900 mb-2">Start Session</h4>
-              <p className="text-gray-600">
-                Position your camera and begin your exercise routine
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
-                3
-              </div>
-              <h4 className="text-xl font-bold text-gray-900 mb-2">Get Feedback</h4>
-              <p className="text-gray-600">
-                Receive real-time corrections and track your progress
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Benefits */}
+      {/* Benefits & Ready to Start - Simplified Enhancement */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -212,22 +213,24 @@ const LandingPage = () => {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl p-8 lg:p-12">
-              <div className="bg-white rounded-xl p-6 shadow-xl">
+            {/* Simple, Polished "Ready to Start" Card */}
+            <div className="bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl p-8 lg:p-12 transform transition-all duration-500 hover:scale-[1.01]">
+              <div className="bg-white rounded-xl p-6 shadow-xl transition-all duration-300 hover:shadow-2xl">
                 <div className="flex items-center gap-3 mb-4">
                   <Activity className="w-8 h-8 text-blue-600" />
                   <h4 className="text-xl font-bold text-gray-900">Ready to Start?</h4>
                 </div>
                 <p className="text-gray-600 mb-6">
-                  Join thousands of patients already improving their recovery with Gati
+                  Join thousands of patients already improving their recovery with Gati.
                 </p>
                 <button
                   onClick={() => navigate('/login')}
-                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors"
+                  className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all hover:shadow-lg hover:-translate-y-0.5 flex items-center justify-center gap-2 group"
                 >
                   Sign Up Now - It's Free
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
-                <p className="text-xs text-gray-500 text-center mt-4">
+                <p className="text-xs text-gray-500 text-center mt-4 font-medium">
                   No credit card required • Works on all devices
                 </p>
               </div>
