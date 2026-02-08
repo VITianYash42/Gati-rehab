@@ -124,12 +124,12 @@ export const validateStartingPosition = (angles) => {
   return {
     isValid: allValid,
     details: isValid,
-    message: allValid 
+    message: allValid
       ? 'Perfect starting position! Ready to begin.'
       : 'Adjust your position: ' + Object.entries(isValid)
-          .filter(([, v]) => !v)
-          .map(([k]) => k)
-          .join(', '),
+        .filter(([, v]) => !v)
+        .map(([k]) => k)
+        .join(', '),
   };
 };
 
@@ -276,5 +276,10 @@ export const AVAILABLE_EXERCISES = {
     name: 'Elbow Flexion',
     description: 'Bend and straighten your elbow',
     difficulty: 'Easy',
+  },
+  'squats': {
+    name: 'Squats',
+    description: 'Full body lower limb engagement',
+    difficulty: 'Medium',
   },
 };

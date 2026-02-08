@@ -12,16 +12,29 @@ import {
 import { db } from '../../../lib/firebase/config';
 
 /**
+ * Generate a consistent chatId between two users
+ */
+export const getChatId = (uid1, uid2) => {
+  return [uid1, uid2].sort().join('_');
+};
+
+/**
  * Send a message
  */
 export const sendMessage = async (chatId, senderId, text, senderName) => {
   try {
+    // Extract receiverId from chatId if possible
+    const ids = chatId.split('_');
+    const receiverId = ids.find(id => id !== senderId) || ids[0];
+
     await addDoc(collection(db, 'messages'), {
       chatId,
       senderId,
+      receiverId,
       senderName,
       text,
-      timestamp: serverTimestamp()
+      timestamp: serverTimestamp(),
+      participants: [senderId, receiverId]
     });
   } catch (error) {
     console.error('[ChatService] Error sending message:', error);
@@ -47,11 +60,4 @@ export const subscribeToMessages = (chatId, callback) => {
     });
     callback(messages);
   });
-};
-
-/**
- * Generate a consistent chatId between two users
- */
-export const getChatId = (uid1, uid2) => {
-  return [uid1, uid2].sort().join('_');
 };

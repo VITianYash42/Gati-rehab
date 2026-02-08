@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Activity, Calendar, Clock, Award, FileText, Download, Filter, Search } from 'lucide-react';
 import NavHeader from '../../../shared/components/NavHeader';
+import Footer from '../../../shared/components/Footer';
 import SessionReport from '../components/SessionReport';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
@@ -42,14 +43,19 @@ const ExerciseHistory = () => {
 
         // Fetch pain logs
         const painRef = collection(db, 'pain_logs');
-        const painQuery = query(painRef, where('userId', '==', user.uid), orderBy('timestamp', 'asc'), limit(20));
+        const painQuery = query(
+          painRef,
+          where('patientId', '==', user.uid),
+          orderBy('timestamp', 'asc'),
+          limit(20)
+        );
         const painSnap = await getDocs(painQuery);
         const logs = [];
         painSnap.forEach(doc => {
           const d = doc.data();
           logs.push({
             date: d.timestamp?.toDate()?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) || 'N/A',
-            pain: d.painLevel
+            pain: d.level || d.painLevel || 0
           });
         });
         setPainLogs(logs);
@@ -136,6 +142,7 @@ const ExerciseHistory = () => {
             </button>
           </div>
         )}
+        <Footer />
       </main>
     </div>
   );
@@ -161,12 +168,12 @@ const PainTrendChart = ({ data }) => {
           <AreaChart data={data}>
             <defs>
               <linearGradient id="colorPain" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#F43F5E" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#F43F5E" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#F43F5E" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#F43F5E" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-            <XAxis dataKey="date" tick={{fontSize: 10, fontWeight: 700, fill: '#94A3B8'}} axisLine={false} tickLine={false} />
+            <XAxis dataKey="date" tick={{ fontSize: 10, fontWeight: 700, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
             <YAxis domain={[0, 5]} hide />
             <Tooltip
               contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}

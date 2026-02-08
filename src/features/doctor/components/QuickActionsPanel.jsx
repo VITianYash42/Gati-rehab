@@ -1,5 +1,5 @@
 
-import { UserPlus, Calendar, FileText, MessageSquare, Video, ChevronRight, Sparkles } from 'lucide-react';
+import { UserPlus, Calendar, FileText, MessageSquare, ChevronRight, Sparkles } from 'lucide-react';
 
 const QuickActionsPanel = ({ onActionClick }) => {
   const actions = [
@@ -29,14 +29,7 @@ const QuickActionsPanel = ({ onActionClick }) => {
       label: 'Neural Engine',
       icon: Sparkles,
       color: 'orange',
-      description: 'Encrypted patient chat',
-    },
-    {
-      id: 'video-call',
-      label: 'Video Link',
-      icon: Video,
-      color: 'rose',
-      description: 'Start telehealth session',
+      description: 'AI-powered insights',
     }
   ];
 

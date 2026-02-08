@@ -40,17 +40,17 @@ const PlanOverviewModal = ({ isOpen, onClose, patientData, routine }) => {
                         <StatusCard
                             icon={<Activity className="w-5 h-5 text-blue-500" />}
                             label="Phase"
-                            value="Recovery Initiation"
+                            value={routine?.phase || "Recovery Initiation"}
                         />
                         <StatusCard
                             icon={<Target className="w-5 h-5 text-emerald-500" />}
                             label="Target"
-                            value="Mobility Restore"
+                            value={routine?.target || "Mobility Restore"}
                         />
                         <StatusCard
                             icon={<Clock className="w-5 h-5 text-orange-500" />}
                             label="Duration"
-                            value="8 Weeks"
+                            value={routine?.duration || "8 Weeks"}
                         />
                     </div>
 
@@ -60,8 +60,8 @@ const PlanOverviewModal = ({ isOpen, onClose, patientData, routine }) => {
                             <CheckCircle className="w-6 h-6 text-blue-600" /> Current Session Structure
                         </h3>
                         <div className="space-y-4">
-                            {routine && routine.length > 0 ? (
-                                routine.map((ex, idx) => (
+                            {routine?.exercises && routine.exercises.length > 0 ? (
+                                routine.exercises.map((ex, idx) => (
                                     <div key={idx} className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 flex items-center justify-between">
                                         <div className="flex items-center gap-6">
                                             <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-slate-400 font-black shadow-sm">
@@ -73,8 +73,12 @@ const PlanOverviewModal = ({ isOpen, onClose, patientData, routine }) => {
                                                     <span>{ex.sets} Sets</span>
                                                     <span>•</span>
                                                     <span>{ex.reps} Reps</span>
-                                                    <span>•</span>
-                                                    <span>{ex.holdTime || '5'}s Hold</span>
+                                                    {ex.notes && (
+                                                        <>
+                                                            <span>•</span>
+                                                            <span className="normal-case">{ex.notes}</span>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -93,7 +97,7 @@ const PlanOverviewModal = ({ isOpen, onClose, patientData, routine }) => {
                                 <ShieldCheck className="w-5 h-5" /> Specialist Observations
                             </h3>
                             <p className="text-blue-700/80 font-bold leading-relaxed">
-                                "Focus on maintaining trunk stability during the extension phase. The goal for this week is consistency over intensity. If pain exceeds level 4, stop the session immediately."
+                                "{routine?.observations || "Consistency is key to a successful recovery. Follow the instructions provided for each exercise."}"
                             </p>
                         </div>
                         <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-blue-200/20 rounded-full blur-3xl"></div>
@@ -102,7 +106,9 @@ const PlanOverviewModal = ({ isOpen, onClose, patientData, routine }) => {
 
                 {/* Footer */}
                 <div className="p-8 bg-white border-t border-slate-100 shrink-0 flex items-center justify-between">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Last updated: 2 days ago</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        Last updated: {routine?.lastUpdated?.toDate ? routine.lastUpdated.toDate().toLocaleDateString() : 'Recently'}
+                    </p>
                     <button
                         onClick={onClose}
                         className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black hover:bg-slate-800 transition-all active:scale-95 shadow-xl"

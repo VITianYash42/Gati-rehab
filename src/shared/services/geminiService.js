@@ -14,7 +14,7 @@ export const getGeminiResponse = async (prompt, history = []) => {
 
         const chat = model.startChat({
             history: history.map(msg => ({
-                role: msg.sender === 'doctor' ? 'user' : 'model',
+                role: msg.sender === 'ai' ? 'model' : 'user',
                 parts: [{ text: msg.text }],
             })),
             generationConfig: {

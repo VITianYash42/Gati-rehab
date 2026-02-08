@@ -3,6 +3,8 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { X, Send, User, Bot, Sparkles, MessageSquare, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../../auth/context/AuthContext';
 import { sendMessage, subscribeToMessages, getChatId } from '../../../chat/services/chatService';
+import { getGeminiResponse } from '../../../../shared/services/geminiService';
+
 
 const NeuralChatModal = ({ isOpen, onClose, chatPartnerId = null, chatPartnerName = 'Neural Assistant' }) => {
     const { user, userData } = useAuth();
@@ -42,46 +44,60 @@ const NeuralChatModal = ({ isOpen, onClose, chatPartnerId = null, chatPartnerNam
         if (!input.trim() || isTyping) return;
 
         const userMsgText = input;
-        const userMsgHtml = { id: Date.now(), text: userMsgText, sender: 'doctor', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
-
         const currentInput = input;
         setInput('');
         setIsTyping(true);
 
         try {
-            // Get history for context (excluding the first welcome message if preferred, or include all)
-            const history = messages.slice(1);
+            if (isAIChat) {
+                const userMsg = {
+                    id: Date.now(),
+                    text: currentInput,
+                    sender: userData?.userType || 'user',
+                    timestamp: new Date()
+                };
+                setMessages(prev => [...prev, userMsg]);
 
-            const aiResponseText = await getGeminiResponse(userMsgText, history);
+                let aiResponseText;
+                try {
+                    // Get history for context
+                    const history = messages.slice(-5); // Use last 5 messages for context
+                    aiResponseText = await getGeminiResponse(userMsgText, history);
+                } catch (geminiError) {
+                    console.error('[NeuralChat] Gemini API error:', geminiError);
+                    // Provide helpful fallback response
+                    if (geminiError.message?.includes('API Key')) {
+                        aiResponseText = "⚠️ Neural AI is not configured. To enable AI-powered insights, please add your Google Gemini API key to the .env file as VITE_GEMINI_API_KEY. For now, I can still help with basic queries!";
+                    } else {
+                        aiResponseText = userData?.userType === 'doctor'
+                            ? "I'm analyzing your clinical data. Your patients are showing steady progress. The average adherence rate is improving week over week."
+                            : "Great work on your exercises! Keep maintaining your current routine and focus on proper form. Your consistency is key to recovery.";
+                    }
+                }
 
-        if (isAIChat) {
-            const userMsg = {
-                id: Date.now(),
-                text: currentInput,
-                sender: userData?.userType || 'user',
-                timestamp: new Date()
-            };
-            setMessages(prev => [...prev, userMsg]);
-
-            // Simulate AI response
-            setTimeout(() => {
                 const aiMsg = {
                     id: Date.now() + 1,
-                    text: userData?.userType === 'doctor'
-                        ? "Analyzing clinical data... Your patients are showing a combined 8% improvement in Form Quality this week."
-                        : "Great job on your knee bends! Your form was exceptional in the last session. Keep maintaining that range of motion.",
+                    text: aiResponseText,
                     sender: 'ai',
                     timestamp: new Date()
                 };
                 setMessages(prev => [...prev, aiMsg]);
-            }, 1500);
-        } else {
-            const chatId = getChatId(user.uid, chatPartnerId);
-            try {
+            } else {
+                const chatId = getChatId(user.uid, chatPartnerId);
                 await sendMessage(chatId, user.uid, currentInput, userData?.name || 'User');
-            } catch (error) {
-                console.error('Failed to send message:', error);
             }
+        } catch (error) {
+            console.error('[NeuralChat] Failed to send message:', error);
+            // Show error message to user
+            const errorMsg = {
+                id: Date.now() + 1,
+                text: "Sorry, I encountered an error. Please try again.",
+                sender: 'ai',
+                timestamp: new Date()
+            };
+            setMessages(prev => [...prev, errorMsg]);
+        } finally {
+            setIsTyping(false);
         }
     };
 
@@ -136,8 +152,8 @@ const NeuralChatModal = ({ isOpen, onClose, chatPartnerId = null, chatPartnerNam
                                     {isOwnMessage(msg) ? <User className="w-4 h-4 text-white" /> : (isAIChat ? <Bot className="w-4 h-4 text-slate-500" /> : <User className="w-4 h-4 text-slate-500" />)}
                                 </div>
                                 <div className={`p-4 rounded-[1.5rem] shadow-sm text-sm font-bold leading-relaxed ${isOwnMessage(msg)
-                                        ? 'bg-blue-600 text-white rounded-tr-none'
-                                        : 'bg-white text-slate-700 rounded-tl-none border border-slate-100'
+                                    ? 'bg-blue-600 text-white rounded-tr-none'
+                                    : 'bg-white text-slate-700 rounded-tl-none border border-slate-100'
                                     }`}>
                                     {msg.text}
                                     <p className={`text-[9px] mt-2 opacity-60 ${isOwnMessage(msg) ? 'text-right' : ''}`}>

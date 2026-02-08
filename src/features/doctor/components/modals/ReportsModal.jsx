@@ -42,7 +42,7 @@ const ReportsModal = ({ isOpen, onClose, patients }) => {
             }
         } catch (error) {
             console.error("Report Generation Error:", error);
-            setGeneratedReport("Error generating report. Please check your Gemini API key.");
+            setGeneratedReport("Error generating report. Please check your Gati AI Service connection.");
         } finally {
             setIsGenerating(false);
         }
@@ -148,7 +148,7 @@ const ReportsModal = ({ isOpen, onClose, patients }) => {
                                     <div className="w-24 h-24 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div>
                                     <Sparkles className="absolute inset-0 m-auto w-8 h-8 text-emerald-600 animate-pulse" />
                                 </div>
-                                <h3 className="text-xl font-black text-slate-900 mb-2">Gemini is Thinking...</h3>
+                                <h3 className="text-xl font-black text-slate-900 mb-2">Gati AI is Thinking...</h3>
                                 <p className="text-sm font-bold text-slate-400">Synthesizing clinical data and formatting documents.</p>
                             </div>
                         ) : (

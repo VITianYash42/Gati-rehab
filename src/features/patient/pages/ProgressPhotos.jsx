@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, Image, Plus, Trash2, Calendar, ShieldCheck, Download } from 'lucide-react';
+import Footer from '../../../shared/components/Footer';
+import { Camera, Calendar, Trash2, Maximize2, X, ChevronLeft, ChevronRight, Share2, Download, Filter, MessageSquare, Plus, Activity } from 'lucide-react';
 import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from '../../../lib/firebase/config';
@@ -74,7 +75,7 @@ const ProgressPhotos = () => {
               onClick={() => navigate('/patient-dashboard')}
               className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold mb-4 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" /> Back to Dashboard
+              <Activity className="w-4 h-4" /> Back to Dashboard
             </button>
             <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none">
               Recovery <span className="text-blue-600">Visuals</span>
@@ -119,7 +120,7 @@ const ProgressPhotos = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-24 bg-white rounded-[3rem] border-2 border-dashed border-slate-200">
-            <Image className="w-20 h-20 text-slate-100 mb-6" />
+            <MessageSquare className="w-20 h-20 text-slate-100 mb-6" />
             <h3 className="text-xl font-black text-slate-900">No visuals captured yet</h3>
             <p className="text-slate-400 font-bold mt-2">Visual progress is key to maintaining motivation.</p>
           </div>
@@ -127,13 +128,14 @@ const ProgressPhotos = () => {
 
         <div className="mt-16 p-8 bg-blue-50 rounded-[2.5rem] border border-blue-100 flex items-center gap-6">
           <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm shrink-0">
-            <ShieldCheck className="w-6 h-6 text-blue-600" />
+            <Filter className="w-6 h-6 text-blue-600" />
           </div>
           <div>
             <h4 className="font-black text-blue-900">Privacy Insured</h4>
             <p className="text-sm font-bold text-blue-600/70">Progress photos are stored in your private clinical cloud and are only visible to your assigned treatment team.</p>
           </div>
         </div>
+        <Footer />
       </main>
     </div>
   );

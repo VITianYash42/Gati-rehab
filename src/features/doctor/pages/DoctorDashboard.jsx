@@ -15,10 +15,22 @@ import {
   Calendar,
   MessageSquare,
   ChevronRight,
-  Target
+  Target,
+  ArrowLeft, User, Mail, Phone, ClipboardList, X
 } from 'lucide-react';
+import {
+  serverTimestamp,
+  collection,
+  onSnapshot,
+  query,
+  where,
+  orderBy,
+  limit
+} from 'firebase/firestore';
+import { db } from '../../../lib/firebase/config';
 import { lazy, Suspense } from 'react';
 import NavHeader from '../../../shared/components/NavHeader';
+import Footer from '../../../shared/components/Footer';
 import PatientCard from '../components/PatientCard';
 const AdherenceTrendChart = lazy(() => import('../components/charts/AdherenceTrendChart'));
 const FormQualityChart = lazy(() => import('../components/charts/FormQualityChart'));
@@ -26,9 +38,10 @@ const ROMTrendChart = lazy(() => import('../components/charts/ROMTrendChart'));
 import SettingsModal from '../components/modals/SettingsModal';
 import QuickActionsPanel from '../components/QuickActionsPanel';
 import DoctorProfileCard from '../components/DoctorProfileCard';
+import ReportsModal from '../components/modals/ReportsModal';
 import AddPatientModal from '../components/modals/AddPatientModal';
 import NeuralChatModal from '../components/modals/NeuralChatModal';
-import AppointmentModal from '../../../shared/components/modals/AppointmentModal';
+import SchedulerModal from '../components/modals/SchedulerModal'; // Use specialized Scheduler
 import VideoConsultationModal from '../../../shared/components/modals/VideoConsultationModal';
 import {
   subscribeToDoctorPatients,
@@ -52,7 +65,7 @@ const DoctorDashboard = () => {
   };
 
   const [patients, setPatients] = useState([]);
-  const [_, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAdherence, setFilterAdherence] = useState('all');
   const [stats, setStats] = useState({
@@ -72,7 +85,10 @@ const DoctorDashboard = () => {
   const [chatOpen, setChatOpen] = useState(false);
   const [appointmentOpen, setAppointmentOpen] = useState(false);
   const [videoOpen, setVideoOpen] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState('');
+  const [appointments, setAppointments] = useState([]);
   const [viewMode, setViewMode] = useState('grid');
+  const [reportsOpen, setReportsOpen] = useState(false);
 
   const handleActionClick = (id) => {
     if (id === 'add-patient') {
@@ -83,6 +99,8 @@ const DoctorDashboard = () => {
       setAppointmentOpen(true);
     } else if (id === 'video-call') {
       setVideoOpen(true);
+    } else if (id === 'reports') {
+      setReportsOpen(true);
     } else {
       console.log(`Action ${id} not implemented yet`);
     }
@@ -114,7 +132,31 @@ const DoctorDashboard = () => {
       }
     });
 
-    return () => unsubscribe();
+    // 3. Listen for appointments
+    const qApps = query(
+      collection(db, 'appointments'),
+      where('doctorId', '==', user.uid)
+    );
+
+    const unsubApps = onSnapshot(qApps, (snapshot) => {
+      const apps = [];
+      snapshot.forEach((doc) => apps.push({ id: doc.id, ...doc.data() }));
+      // Sort by date in memory instead of Firestore query
+      apps.sort((a, b) => {
+        const dateA = new Date(a.date || 0);
+        const dateB = new Date(b.date || 0);
+        return dateB - dateA;
+      });
+      setAppointments(apps);
+    }, (error) => {
+      console.error('[DoctorDashboard] Appointments listener error:', error);
+      setAppointments([]);
+    });
+
+    return () => {
+      unsubscribe();
+      unsubApps();
+    };
   }, [user, userData]);
 
   // Stats calculation
@@ -349,9 +391,22 @@ const DoctorDashboard = () => {
                 <Calendar className="w-5 h-5 text-slate-400" />
               </div>
               <div className="space-y-3">
-                <AppointmentRow name="Priya Sharma" time="14:30 PM" type="Video Call" />
-                <AppointmentRow name="Amit Patel" time="16:00 PM" type="In-person" />
-                <AppointmentRow name="Rajesh Kumar" time="Tomorrow" type="Follow-up" />
+                {appointments.slice(0, 3).map(app => (
+                  <AppointmentRow
+                    key={app.id}
+                    name={app.patientName}
+                    time={`${app.date} ${app.time}`}
+                    type={app.type}
+                    status={app.status}
+                    onJoin={app.status === 'confirmed' && app.type === 'Video Call' ? () => {
+                      setSelectedRoom(`Gati_Session_${app.id}`);
+                      setVideoOpen(true);
+                    } : null}
+                  />
+                ))}
+                {appointments.length === 0 && (
+                  <p className="text-center py-4 text-slate-400 text-xs font-bold italic">No scheduled sessions</p>
+                )}
               </div>
               <button
                 onClick={() => setAppointmentOpen(true)}
@@ -363,11 +418,7 @@ const DoctorDashboard = () => {
           </div>
         </div>
 
-        <div className="mt-12 text-center">
-          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest opacity-60">
-            Measurements are approximate and intended for rehabilitation guidance only
-          </p>
-        </div>
+        <Footer />
       </main>
 
       <SettingsModal
@@ -388,32 +439,55 @@ const DoctorDashboard = () => {
         onClose={() => setChatOpen(false)}
       />
 
-      <AppointmentModal
+      <SchedulerModal
         isOpen={appointmentOpen}
         onClose={() => setAppointmentOpen(false)}
+        doctorId={user?.uid}
+        patients={patients}
       />
 
       <VideoConsultationModal
         isOpen={videoOpen}
         onClose={() => setVideoOpen(false)}
-        roomName={`GatiClinic_Doctor_${user?.uid?.substring(0, 8)}`}
+        roomName={selectedRoom}
+      />
+
+      <ReportsModal
+        isOpen={reportsOpen}
+        onClose={() => setReportsOpen(false)}
+        patients={patients}
       />
     </div>
   );
 };
 
-const AppointmentRow = ({ name, time, type }) => (
-  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all cursor-pointer">
+const AppointmentRow = ({ name, time, type, status, onJoin }) => (
+  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl hover:bg-slate-100 transition-all cursor-pointer group">
     <div className="flex items-center gap-3">
       <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
         <Users className="w-5 h-5 text-slate-400" />
       </div>
       <div>
         <p className="text-sm font-black text-slate-800">{name}</p>
-        <p className="text-[10px] font-bold text-slate-400 uppercase">{type}</p>
+        <div className="flex items-center gap-2">
+          <p className="text-[10px] font-bold text-slate-400 uppercase">{type}</p>
+          <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-md border ${status === 'confirmed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-slate-100 text-slate-400'}`}>
+            {status}
+          </span>
+        </div>
       </div>
     </div>
-    <span className="text-xs font-black text-blue-600">{time}</span>
+    <div className="flex flex-col items-end gap-1">
+      <span className="text-xs font-black text-blue-600">{time}</span>
+      {onJoin && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onJoin(); }}
+          className="text-[8px] font-black text-white bg-blue-600 px-2 py-1 rounded-md hover:bg-blue-500 animate-pulse"
+        >
+          JOIN LIVE
+        </button>
+      )}
+    </div>
   </div>
 );
 

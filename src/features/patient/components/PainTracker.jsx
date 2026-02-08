@@ -105,7 +105,7 @@ const PainTracker = () => {
             className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 disabled:opacity-50 group active:scale-95"
           >
             <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-            {isLogging ? 'Logging...' : 'Log Daily Metric'}
+            {isLogging ? 'Logging...' : 'Log Symptom'}
           </button>
         </div>
       ) : (

@@ -7,7 +7,9 @@ import {
   getDocs,
   onSnapshot,
   setDoc,
-  serverTimestamp
+  serverTimestamp,
+  addDoc,
+  deleteDoc
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebase/config';
 import { logAction } from '../../../shared/services/auditLogger';
@@ -389,7 +391,7 @@ export const updatePatientRoutine = async (patientId, routineData) => {
       ...routineData,
       updatedAt: serverTimestamp(),
     }, { merge: true });
-    
+
     // Audit log - We don't have the doctor's UID here easily unless we pass it,
     // but we can at least log the action on the patient
     await logAction(patientId, 'UPDATE_ROUTINE', { updatedBy: 'doctor' });
@@ -397,6 +399,47 @@ export const updatePatientRoutine = async (patientId, routineData) => {
     return { success: true };
   } catch (error) {
     console.error('[DoctorService] Update routine error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Medications Management
+ */
+export const getPatientMedications = async (patientId) => {
+  try {
+    const q = query(collection(db, 'medications'), where('userId', '==', patientId));
+    const snapshot = await getDocs(q);
+    const meds = [];
+    snapshot.forEach((doc) => meds.push({ id: doc.id, ...doc.data() }));
+    return meds;
+  } catch (error) {
+    console.error('[DoctorService] Get medications error:', error);
+    return [];
+  }
+};
+
+export const addMedication = async (patientId, medData) => {
+  try {
+    const docRef = await addDoc(collection(db, 'medications'), {
+      ...medData,
+      userId: patientId,
+      takenToday: false,
+      createdAt: serverTimestamp()
+    });
+    return { id: docRef.id, success: true };
+  } catch (error) {
+    console.error('[DoctorService] Add medication error:', error);
+    throw error;
+  }
+};
+
+export const deleteMedication = async (medId) => {
+  try {
+    await deleteDoc(doc(db, 'medications', medId));
+    return { success: true };
+  } catch (error) {
+    console.error('[DoctorService] Delete medication error:', error);
     throw error;
   }
 };

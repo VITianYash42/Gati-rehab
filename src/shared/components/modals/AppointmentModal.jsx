@@ -13,7 +13,7 @@ import {
 import { db } from '../../../lib/firebase/config';
 import { useAuth } from '../../../features/auth/context/AuthContext';
 
-const AppointmentModal = ({ isOpen, onClose, patientId = null, doctorId = null, patientName = '', doctorName = '' }) => {
+const AppointmentModal = ({ isOpen, onClose, patientId = null, doctorId = null, patientName = '', doctorName = '', onJoinCall }) => {
   const { user, userData } = useAuth();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -54,6 +54,10 @@ const AppointmentModal = ({ isOpen, onClose, patientId = null, doctorId = null, 
     try {
       const finalPatientId = patientId || (userData?.userType === 'patient' ? user.uid : '');
       const finalDoctorId = doctorId || (userData?.userType === 'doctor' ? user.uid : userData?.doctorId);
+
+      if (!finalDoctorId) {
+        throw new Error('No doctor assigned. Please contact support.');
+      }
 
       await addDoc(collection(db, 'appointments'), {
         patientId: finalPatientId,
@@ -115,7 +119,7 @@ const AppointmentModal = ({ isOpen, onClose, patientId = null, doctorId = null, 
                     required
                     className="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-900 focus:ring-4 focus:ring-blue-100 transition-all"
                     value={formData.date}
-                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                   />
                 </div>
               </div>
@@ -128,7 +132,7 @@ const AppointmentModal = ({ isOpen, onClose, patientId = null, doctorId = null, 
                     required
                     className="w-full pl-12 pr-4 py-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-900 focus:ring-4 focus:ring-blue-100 transition-all"
                     value={formData.time}
-                    onChange={(e) => setFormData({...formData, time: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
                   />
                 </div>
               </div>
@@ -139,14 +143,14 @@ const AppointmentModal = ({ isOpen, onClose, patientId = null, doctorId = null, 
               <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
-                  onClick={() => setFormData({...formData, type: 'Video Call'})}
+                  onClick={() => setFormData({ ...formData, type: 'Video Call' })}
                   className={`flex items-center justify-center gap-2 p-4 rounded-2xl font-black transition-all border ${formData.type === 'Video Call' ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-200' : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100'}`}
                 >
                   <Video className="w-4 h-4" /> Video Call
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormData({...formData, type: 'In-person'})}
+                  onClick={() => setFormData({ ...formData, type: 'In-person' })}
                   className={`flex items-center justify-center gap-2 p-4 rounded-2xl font-black transition-all border ${formData.type === 'In-person' ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-200' : 'bg-slate-50 text-slate-500 border-slate-100 hover:bg-slate-100'}`}
                 >
                   <MapPin className="w-4 h-4" /> In-person
@@ -160,7 +164,7 @@ const AppointmentModal = ({ isOpen, onClose, patientId = null, doctorId = null, 
                 rows="3"
                 className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-900 focus:ring-4 focus:ring-blue-100 transition-all resize-none"
                 value={formData.notes}
-                onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 placeholder="Specific symptoms or topics to discuss..."
               />
             </div>
@@ -199,7 +203,25 @@ const AppointmentModal = ({ isOpen, onClose, patientId = null, doctorId = null, 
                         <p className="text-[10px] font-bold text-slate-400 uppercase">{userData?.userType === 'doctor' ? app.patientName : app.doctorName}</p>
                       </div>
                     </div>
-                    <span className="text-[10px] font-black uppercase px-2 py-1 bg-white rounded-full border border-slate-100 text-slate-500">{app.status}</span>
+                    <div className="flex items-center gap-3">
+                      {app.type === 'Video Call' && app.status === 'confirmed' && (
+                        <div className="flex flex-col items-center gap-2">
+                          <button
+                            onClick={() => {
+                              onJoinCall?.(`Gati_Session_${app.id}`);
+                              onClose();
+                            }}
+                            className="px-6 py-2 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-500 transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] active:scale-95 flex items-center gap-2"
+                          >
+                            <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                            Join Now
+                          </button>
+                        </div>
+                      )}
+                      <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-full border ${app.status === 'confirmed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-white text-slate-500 border-slate-100'}`}>
+                        {app.status}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>

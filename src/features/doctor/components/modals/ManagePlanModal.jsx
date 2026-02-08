@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Save, Dumbbell, Repeat, Clock, FileText } from 'lucide-react';
-import { getPatientRoutine, updatePatientRoutine } from '../../services/doctorService';
+import { X, Plus, Trash2, Save, Dumbbell, Repeat, Clock, FileText, Pill, Trash, Target } from 'lucide-react';
+import {
+  getPatientRoutine,
+  updatePatientRoutine,
+  getPatientMedications,
+  addMedication,
+  deleteMedication
+} from '../../services/doctorService';
 
 const ManagePlanModal = ({ isOpen, onClose, patientId, patientName }) => {
   const [loading, setLoading] = useState(false);
@@ -12,20 +18,61 @@ const ManagePlanModal = ({ isOpen, onClose, patientId, patientName }) => {
     duration: '',
     notes: ''
   });
+  const [planDetails, setPlanDetails] = useState({
+    phase: 'Recovery Initiation',
+    target: 'Mobility Restore',
+    duration: '8 Weeks',
+    observations: 'Focus on consistency over intensity.'
+  });
+
+  const [meds, setMeds] = useState([]);
+  const [newMed, setNewMed] = useState({ name: '', dosage: '', time: '' });
 
   // Load existing routine when modal opens
   useEffect(() => {
     if (isOpen && patientId) {
       loadRoutine();
+      loadMeds();
     }
   }, [isOpen, patientId]);
+
+  const loadMeds = async () => {
+    const data = await getPatientMedications(patientId);
+    setMeds(data);
+  };
+
+  const handleAddMed = async () => {
+    if (!newMed.name || !newMed.time) return;
+    try {
+      await addMedication(patientId, newMed);
+      setNewMed({ name: '', dosage: '', time: '' });
+      loadMeds();
+    } catch (err) {
+      console.error("Error adding med:", err);
+    }
+  };
+
+  const handleDeleteMed = async (id) => {
+    try {
+      await deleteMedication(id);
+      loadMeds();
+    } catch (err) {
+      console.error("Error deleting med:", err);
+    }
+  };
 
   const loadRoutine = async () => {
     setLoading(true);
     try {
       const routine = await getPatientRoutine(patientId);
-      if (routine && routine.exercises) {
-        setExercises(routine.exercises);
+      if (routine) {
+        if (routine.exercises) setExercises(routine.exercises);
+        setPlanDetails({
+          phase: routine.phase || 'Recovery Initiation',
+          target: routine.target || 'Mobility Restore',
+          duration: routine.duration || '8 Weeks',
+          observations: routine.observations || 'Focus on consistency over intensity.'
+        });
       } else {
         setExercises([]);
       }
@@ -38,7 +85,7 @@ const ManagePlanModal = ({ isOpen, onClose, patientId, patientName }) => {
 
   const handleAddExercise = () => {
     if (!newExercise.name) return;
-    
+
     setExercises([...exercises, { ...newExercise, id: Date.now() }]);
     setNewExercise({ name: '', sets: '', reps: '', duration: '', notes: '' });
   };
@@ -52,6 +99,7 @@ const ManagePlanModal = ({ isOpen, onClose, patientId, patientName }) => {
     try {
       await updatePatientRoutine(patientId, {
         exercises: exercises,
+        ...planDetails,
         lastUpdated: new Date()
       });
       onClose();
@@ -67,14 +115,14 @@ const ManagePlanModal = ({ isOpen, onClose, patientId, patientName }) => {
   return (
     <div className="fixed inset-0 z-[100] overflow-y-auto">
       {/* Backdrop */}
-      <div 
+      <div
         className="fixed inset-0 bg-black bg-opacity-50 transition-opacity backdrop-blur-sm"
         onClick={onClose}
       />
-      
+
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-          
+
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-slate-50/50">
             <div>
@@ -88,63 +136,170 @@ const ManagePlanModal = ({ isOpen, onClose, patientId, patientName }) => {
 
           {/* Content */}
           <div className="p-6 space-y-8 max-h-[70vh] overflow-y-auto">
-            
-            {/* Add New Exercise Form */}
-            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200/60 shadow-sm">
-              <h3 className="text-sm font-black text-slate-900 mb-4 flex items-center gap-2 uppercase tracking-wide">
-                <Plus className="w-4 h-4 text-blue-600" /> Add New Exercise
+
+            {/* Plan Strategy Details */}
+            <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-200">
+              <h3 className="text-sm font-black text-slate-900 mb-6 uppercase tracking-wider flex items-center gap-2">
+                <Target className="w-4 h-4 text-blue-600" /> Strategy Overview
               </h3>
-              <div className="grid grid-cols-12 gap-3">
-                <div className="col-span-12 md:col-span-6">
-                  <div className="relative">
-                    <Dumbbell className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder="Exercise Name (e.g. Knee Extension)"
-                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                      value={newExercise.name}
-                      onChange={(e) => setNewExercise({...newExercise, name: e.target.value})}
-                    />
-                  </div>
-                </div>
-                <div className="col-span-4 md:col-span-2">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase ml-1">Recovery Phase</label>
                   <input
                     type="text"
-                    placeholder="Sets"
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all text-center"
-                    value={newExercise.sets}
-                    onChange={(e) => setNewExercise({...newExercise, sets: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                    value={planDetails.phase}
+                    onChange={(e) => setPlanDetails({ ...planDetails, phase: e.target.value })}
                   />
                 </div>
-                <div className="col-span-4 md:col-span-2">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase ml-1">Main Target</label>
                   <input
                     type="text"
-                    placeholder="Reps"
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all text-center"
-                    value={newExercise.reps}
-                    onChange={(e) => setNewExercise({...newExercise, reps: e.target.value})}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                    value={planDetails.target}
+                    onChange={(e) => setPlanDetails({ ...planDetails, target: e.target.value })}
                   />
                 </div>
-                <div className="col-span-4 md:col-span-2">
-                  <button 
-                    onClick={handleAddExercise}
-                    disabled={!newExercise.name}
-                    className="w-full h-full bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-slate-200 active:scale-95"
-                  >
-                    Add
-                  </button>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase ml-1">Total Duration</label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                    value={planDetails.duration}
+                    onChange={(e) => setPlanDetails({ ...planDetails, duration: e.target.value })}
+                  />
                 </div>
-                <div className="col-span-12">
-                   <div className="relative">
-                    <FileText className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 mb-2 uppercase ml-1">Clinical Observations / Guidance</label>
+                <textarea
+                  rows="3"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                  value={planDetails.observations}
+                  onChange={(e) => setPlanDetails({ ...planDetails, observations: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {/* Add New Exercise Form */}
+            <div className="bg-slate-100/50 p-6 rounded-[2rem] border border-slate-200/60 shadow-sm relative overflow-hidden group">
+              <div className="relative z-10">
+                <h3 className="text-sm font-black text-slate-900 mb-4 flex items-center gap-2 uppercase tracking-wide">
+                  <Plus className="w-4 h-4 text-blue-600" /> Append Session Exercise
+                </h3>
+                <div className="grid grid-cols-12 gap-3">
+                  <div className="col-span-12 md:col-span-6">
+                    <div className="relative">
+                      <Dumbbell className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                      <input
+                        type="text"
+                        placeholder="Exercise Name"
+                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                        value={newExercise.name}
+                        onChange={(e) => setNewExercise({ ...newExercise, name: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className="col-span-4 md:col-span-2">
                     <input
                       type="text"
-                      placeholder="Clinician Notes / Instructions (Optional)"
-                      className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                      value={newExercise.notes}
-                      onChange={(e) => setNewExercise({...newExercise, notes: e.target.value})}
+                      placeholder="Sets"
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all text-center"
+                      value={newExercise.sets}
+                      onChange={(e) => setNewExercise({ ...newExercise, sets: e.target.value })}
                     />
                   </div>
+                  <div className="col-span-4 md:col-span-2">
+                    <input
+                      type="text"
+                      placeholder="Reps"
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all text-center"
+                      value={newExercise.reps}
+                      onChange={(e) => setNewExercise({ ...newExercise, reps: e.target.value })}
+                    />
+                  </div>
+                  <div className="col-span-4 md:col-span-2">
+                    <button
+                      onClick={handleAddExercise}
+                      disabled={!newExercise.name}
+                      className="w-full h-full bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg active:scale-95"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Medication Management */}
+            <div className="bg-rose-50/50 p-6 rounded-[2rem] border border-rose-100 shadow-sm relative overflow-hidden group">
+              <div className="relative z-10">
+                <h3 className="text-sm font-black text-slate-900 mb-6 flex items-center gap-2 uppercase tracking-wide">
+                  <Pill className="w-4 h-4 text-rose-500" /> Prescribe Medication
+                </h3>
+                <div className="grid grid-cols-12 gap-3 mb-6">
+                  <div className="col-span-12 md:col-span-5">
+                    <input
+                      type="text"
+                      placeholder="Medication Name"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:ring-2 focus:ring-rose-500 outline-none"
+                      value={newMed.name}
+                      onChange={(e) => setNewMed({ ...newMed, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="col-span-12 md:col-span-3">
+                    <input
+                      type="text"
+                      placeholder="Dosage"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:ring-2 focus:ring-rose-500 outline-none"
+                      value={newMed.dosage}
+                      onChange={(e) => setNewMed({ ...newMed, dosage: e.target.value })}
+                    />
+                  </div>
+                  <div className="col-span-12 md:col-span-2">
+                    <input
+                      type="time"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:ring-2 focus:ring-rose-500 outline-none"
+                      value={newMed.time}
+                      onChange={(e) => setNewMed({ ...newMed, time: e.target.value })}
+                    />
+                  </div>
+                  <div className="col-span-12 md:col-span-2">
+                    <button
+                      onClick={handleAddMed}
+                      disabled={!newMed.name}
+                      className="w-full h-full bg-rose-500 text-white rounded-xl font-bold text-sm hover:bg-rose-600 active:scale-95 disabled:opacity-50 transition-all shadow-lg shadow-rose-100"
+                    >
+                      Prescribe
+                    </button>
+                  </div>
+                </div>
+
+                {/* Current Meds List */}
+                <div className="space-y-2">
+                  {meds.map((med) => (
+                    <div key={med.id} className="flex items-center justify-between p-3 bg-white/60 backdrop-blur-sm border border-rose-100 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-rose-100 rounded-lg flex items-center justify-center">
+                          <Pill className="w-4 h-4 text-rose-500" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-black text-slate-900 leading-none mb-1">{med.name}</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{med.dosage} • {med.time} Shift</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteMed(med.id)}
+                        className="p-1.5 text-slate-300 hover:text-rose-500 transition-colors"
+                      >
+                        <Trash className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  {meds.length === 0 && (
+                    <p className="text-xs font-bold text-slate-400 text-center py-4 italic">No active medications prescribed.</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -161,7 +316,7 @@ const ManagePlanModal = ({ isOpen, onClose, patientId, patientName }) => {
                   </span>
                 )}
               </div>
-              
+
               {exercises.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
                   <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-3">
@@ -187,7 +342,7 @@ const ManagePlanModal = ({ isOpen, onClose, patientId, patientName }) => {
                           )}
                         </div>
                       </div>
-                      <button 
+                      <button
                         onClick={() => handleRemoveExercise(ex.id)}
                         className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
                         title="Remove exercise"
@@ -203,13 +358,13 @@ const ManagePlanModal = ({ isOpen, onClose, patientId, patientName }) => {
 
           {/* Footer */}
           <div className="p-6 border-t border-gray-100 bg-slate-50 flex justify-end gap-3">
-            <button 
+            <button
               onClick={onClose}
               className="px-6 py-3 text-sm font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors"
             >
               Cancel
             </button>
-            <button 
+            <button
               onClick={handleSave}
               disabled={loading}
               className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 disabled:opacity-50 transition-all shadow-lg shadow-blue-200 active:scale-95"

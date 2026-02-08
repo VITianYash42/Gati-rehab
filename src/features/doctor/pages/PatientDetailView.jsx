@@ -4,24 +4,25 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
-import { ArrowLeft, User, Calendar, Activity, Mail, Phone, TrendingUp, ClipboardList } from 'lucide-react';
+import { ArrowLeft, User, Calendar, Activity, Mail, Phone, TrendingUp, ClipboardList, X, Download, MessageSquare } from 'lucide-react';
 const PatientROMProgressChart = lazy(() => import('../components/charts/PatientROMProgressChart'));
 const PatientQualityTrendChart = lazy(() => import('../components/charts/PatientQualityTrendChart'));
 import NavHeader from '../../../shared/components/NavHeader';
+import Footer from '../../../shared/components/Footer';
 import SessionReport from '../../patient/components/SessionReport';
 import ManagePlanModal from '../components/modals/ManagePlanModal';
 import ChatWindow from '../../shared/components/ChatWindow';
-import { onAuthChange } from '../../auth/services/authService';
 import { getPatientDetails, getPatientSessions } from '../services/doctorService';
 import { exportToCSV } from '../../../shared/utils/csvExport';
+import { useAuth } from '../../auth/context/AuthContext';
 import { logAction } from '../../../shared/utils/auditLogger';
 
 const PatientDetailView = () => {
   const { patientId } = useParams();
   const navigate = useNavigate();
-  
+  const { user, userData } = useAuth();
+
   // State management
-  const [doctorProfile, setDoctorProfile] = useState(null);
   const [patient, setPatient] = useState(null);
   const [sessions, setSessions] = useState([]);
   const [chartData, setChartData] = useState({ rom: [], quality: [] });
@@ -30,24 +31,14 @@ const PatientDetailView = () => {
   const [managePlanOpen, setManagePlanOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
 
-  // Auth listener - Get doctor profile
-  useEffect(() => {
-    const unsubscribe = onAuthChange((authData) => {
-      if (authData && authData.userData) {
-        if (authData.userData.userType === 'doctor') {
-          setDoctorProfile({
-            id: authData.user.uid,
-            name: authData.userData.name || 'Doctor',
-            email: authData.userData.email,
-            specialization: authData.userData.specialization || 'Physiotherapist',
-            photoURL: authData.userData.photoURL || null,
-          });
-        }
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
+  // Create doctor profile from auth context
+  const doctorProfile = user && userData ? {
+    id: user.uid,
+    name: userData.name || 'Doctor',
+    email: userData.email,
+    specialization: userData.specialization || 'Physiotherapist',
+    photoURL: userData.photoURL || null,
+  } : null;
 
   // Fetch patient data & Sessions
   useEffect(() => {
@@ -108,8 +99,8 @@ const PatientDetailView = () => {
       'Duration (Sec)': s.duration
     }));
 
-    if (doctorProfile) {
-      await logAction(doctorProfile.id, 'EXPORT_DATA', { patientId, patientName: patient?.name });
+    if (user) {
+      await logAction(user.uid, 'EXPORT_DATA', { patientId, patientName: patient?.name });
     }
 
     exportToCSV(exportData, `Clinical_Report_${patient?.name?.replace(/\s+/g, '_')}_${new Date().toLocaleDateString()}.csv`);
@@ -175,7 +166,8 @@ const PatientDetailView = () => {
             </button>
             <button
               onClick={() => setChatOpen(true)}
-              className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl active:scale-95"
+              disabled={!user}
+              className={`flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl active:scale-95 ${!user ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <MessageSquare className="w-4 h-4" />
               Message Patient
@@ -202,7 +194,7 @@ const PatientDetailView = () => {
                   {patient.name}
                 </h1>
                 <p className="text-lg font-medium text-gray-500 mt-1">{patient.condition}</p>
-                
+
                 {/* Contact Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
                   {patient.email && (
@@ -300,14 +292,14 @@ const PatientDetailView = () => {
         </div>
       </div>
 
-      <ManagePlanModal 
+      <ManagePlanModal
         isOpen={managePlanOpen}
         onClose={() => setManagePlanOpen(false)}
         patientId={patientId}
         patientName={patient?.name || 'Patient'}
       />
 
-      {chatOpen && (
+      {chatOpen && user && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setChatOpen(false)} />
           <div className="relative w-full max-w-lg">
@@ -318,12 +310,13 @@ const PatientDetailView = () => {
               <X className="w-6 h-6" /> Close Chat
             </button>
             <ChatWindow
-              currentUser={{ uid: doctorProfile.id }}
+              currentUser={{ uid: user.uid }}
               otherUser={{ uid: patientId, name: patient.name }}
             />
           </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 };

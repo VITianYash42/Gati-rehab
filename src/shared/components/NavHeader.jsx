@@ -1,7 +1,7 @@
 
 // NavHeader Component - Navigation header with Auth integration
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Activity, LayoutDashboard, LogOut, User, Settings, Zap, Compass, Sparkles, UserCircle, MessageSquare } from 'lucide-react';
+import { Home, Activity, LayoutDashboard, LogOut, User, Settings, Zap, Compass, Sparkles, UserCircle, MessageSquare, FileText } from 'lucide-react';
 import { useAuth } from '../../features/auth/context/AuthContext';
 
 const NavHeader = ({ userType = 'patient', doctorProfile = null, onSettingsClick = null, theme = 'light' }) => {
@@ -83,6 +83,12 @@ const NavHeader = ({ userType = 'patient', doctorProfile = null, onSettingsClick
                     icon={<MessageSquare className="w-4 h-4" />}
                     label="Messages"
                   />
+                  <NavButton
+                    active={isActive('/patient/reports')}
+                    onClick={() => navigate('/patient/reports')}
+                    icon={<FileText className="w-4 h-4" />}
+                    label="Reports"
+                  />
                 </>
               ) : (
                 <>
@@ -103,12 +109,12 @@ const NavHeader = ({ userType = 'patient', doctorProfile = null, onSettingsClick
             </div>
 
             {/* Profile & Logout */}
-            <div className={`flex items-center gap-2 sm:gap-4 pl-3 sm:pl-6 border-l ${isDark ? 'border-white/10' : 'border-slate-200/60'}`}>
+            <div className={`flex items-center gap-1.5 sm:gap-4 pl-2 sm:pl-6 border-l ${isDark ? 'border-white/10' : 'border-slate-200/60'}`}>
               <div
-                className={`${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-slate-100'} flex items-center gap-3 p-1 rounded-xl sm:rounded-2xl border shadow-sm transition-all cursor-pointer hover:border-blue-500/30`}
+                className={`${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-slate-100'} flex items-center gap-2 p-1 rounded-xl sm:rounded-2xl border shadow-sm transition-all cursor-pointer hover:border-blue-500/30`}
                 onClick={() => userType === 'patient' && navigate('/profile')}
               >
-                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'} flex items-center justify-center border ${isDark ? 'border-white/10' : 'border-slate-100'} overflow-hidden`}>
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl ${isDark ? 'bg-white/5' : 'bg-slate-50'} flex items-center justify-center border ${isDark ? 'border-white/10' : 'border-slate-100'} overflow-hidden shrink-0`}>
                   {profile?.photoURL ? (
                     <img src={profile.photoURL} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
@@ -123,12 +129,12 @@ const NavHeader = ({ userType = 'patient', doctorProfile = null, onSettingsClick
                     {userType}
                   </p>
                 </div>
-              </button>
+              </div>
 
               {onSettingsClick && (
                 <button
                   onClick={onSettingsClick}
-                  className={`${isDark ? 'bg-white/5 text-slate-400 border-white/10 hover:text-white' : 'bg-slate-50 text-slate-400 border-slate-100 hover:text-slate-900'} p-2 sm:p-3 border rounded-xl transition-all`}
+                  className={`${isDark ? 'bg-white/5 text-slate-400 border-white/10 hover:text-white' : 'bg-slate-50 text-slate-400 border-slate-100 hover:text-slate-900'} p-2.5 sm:p-3 border rounded-xl sm:rounded-2xl transition-all active:scale-90`}
                   aria-label="Open settings"
                 >
                   <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -137,7 +143,7 @@ const NavHeader = ({ userType = 'patient', doctorProfile = null, onSettingsClick
 
               <button
                 onClick={handleLogout}
-                className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-95 group shadow-sm hover:shadow-rose-100"
+                className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl sm:rounded-2xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white transition-all transform active:scale-90 group shadow-sm hover:shadow-rose-100"
                 aria-label="Logout"
               >
                 <LogOut className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-0.5" />
@@ -147,7 +153,7 @@ const NavHeader = ({ userType = 'patient', doctorProfile = null, onSettingsClick
         </div>
       </div>
 
-      </header>
+    </header>
   );
 };
 

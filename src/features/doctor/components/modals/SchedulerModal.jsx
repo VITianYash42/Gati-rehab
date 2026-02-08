@@ -12,7 +12,8 @@ const SchedulerModal = ({ isOpen, onClose, doctorId, patients }) => {
         patientId: '',
         date: '',
         time: '',
-        type: 'Consultation'
+        type: 'Consultation',
+        meetingLink: 'https://meet.google.com/ayd-uthv-yvd'
     });
 
     useEffect(() => {
@@ -53,7 +54,7 @@ const SchedulerModal = ({ isOpen, onClose, doctorId, patients }) => {
                 createdAt: serverTimestamp()
             });
             setIsAdding(false);
-            setNewAppt({ patientId: '', date: '', time: '', type: 'Consultation' });
+            setNewAppt({ patientId: '', date: '', time: '', type: 'Consultation', meetingLink: 'https://meet.google.com/ayd-uthv-yvd' });
             fetchAppointments();
         } catch (error) {
             console.error("Create Appt Error:", error);
@@ -127,6 +128,11 @@ const SchedulerModal = ({ isOpen, onClose, doctorId, patients }) => {
                                                     <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {new Date(appt.date).toLocaleDateString()}</span>
                                                     <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {appt.time}</span>
                                                     <span className="px-2 py-0.5 bg-slate-100 rounded-full text-slate-600">{appt.type}</span>
+                                                    {appt.meetingLink && (
+                                                        <a href={appt.meetingLink} target="_blank" rel="noopener noreferrer" className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full flex items-center gap-1 hover:bg-blue-200 transition-colors">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div> Join Call
+                                                        </a>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -177,6 +183,16 @@ const SchedulerModal = ({ isOpen, onClose, doctorId, patients }) => {
                                             className="p-4 bg-slate-50 border-2 border-slate-50 rounded-2xl font-black text-slate-900 text-xs focus:border-indigo-600 outline-none"
                                         />
                                     </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 block ml-1">Video Link (Auto-Generated)</label>
+                                    <input
+                                        type="url"
+                                        value={newAppt.meetingLink}
+                                        readOnly
+                                        className="w-full p-4 bg-slate-100 border-2 border-slate-100 rounded-2xl font-black text-slate-500 text-xs outline-none cursor-not-allowed"
+                                    />
                                 </div>
 
                                 <div>

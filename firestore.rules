@@ -2,132 +2,134 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper function to check if user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
     
-    // Helper function to check if user is the owner
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // Helper function to check if current user is the doctor of a patient
     function isDoctorOf(patientId) {
-      return isAuthenticated() &&
-        exists(/databases/$(database)/documents/doctor_patients/$(request.auth.uid)/patients/$(patientId));
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(patientId)).data.doctorId == request.auth.uid;
     }
 
-    // Helper to check ownership of a document based on its data
     function isDocOwner(data) {
-      return isAuthenticated() && (data.userId == request.auth.uid || data.patientId == request.auth.uid);
-    }
-
-    // Helper to check if current user is the doctor for the patient in the document data
-    function isDocDoctor(data) {
-      return isDoctorOf(data.patientId) || isDoctorOf(data.userId);
+      return isAuthenticated() && (
+        data.userId == request.auth.uid || 
+        data.patientId == request.auth.uid || 
+        data.senderId == request.auth.uid ||
+        data.receiverId == request.auth.uid ||
+        (data.participants != null && request.auth.uid in data.participants)
+      );
     }
     
     // 1. Users collection 
     match /users/{userId} {
-      allow read: if isOwner(userId) || isDoctorOf(userId);
-      allow write: if isOwner(userId) || isDoctorOf(userId);
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
     }
     
     // 2. Routines Collection
     match /routines/{userId} {
       allow read: if isOwner(userId) || isDoctorOf(userId);
-      allow write: if isDoctorOf(userId);
+      allow write: if isOwner(userId) || isDoctorOf(userId);
     }
     
-    // 3. Doctor Patients Collection
-    match /doctor_patients/{doctorId}/patients/{patientId} {
-      allow read, write: if request.auth.uid == doctorId;
-    }
-    
-    // 4. Sessions collection 
+    // 3. Sessions collection 
     match /sessions/{sessionId} {
-      // For creation, we check the incoming data (request.resource.data)
-      allow create: if isAuthenticated() && (
-        isDocOwner(request.resource.data) || isDocDoctor(request.resource.data)
-      );
-      // For reading, we check the existing data (resource.data)
-      allow read: if isAuthenticated() && (
-        isDocOwner(resource.data) || isDocDoctor(resource.data)
-      );
-      // For updates, we check both current and future states to ensure security
-      allow update: if isAuthenticated() && (
-        isDocOwner(resource.data) && isDocOwner(request.resource.data) ||
-        isDocDoctor(resource.data) && isDocDoctor(request.resource.data)
-      );
-      // For deletion, we check current state
-      allow delete: if isAuthenticated() && (
-        isDocOwner(resource.data) || isDocDoctor(resource.data)
-      );
+      allow create: if isAuthenticated();
+      allow read: if isAuthenticated() && (isDocOwner(resource.data) || isDoctorOf(resource.data.patientId));
+      allow update, delete: if isAuthenticated() && isDocOwner(resource.data);
     }
     
-    // 5. Legacy/Unused collections (kept for safety)
-    match /patients/{patientId} {
-      allow read: if isOwner(patientId) || isDoctorOf(patientId);
-      allow write: if isOwner(patientId);
-    }
-    
-    // 6. Trends (Charts)
+    // 4. Trends (Charts)
     match /trends/{patientId}/{document=**} {
       allow read: if isOwner(patientId) || isDoctorOf(patientId);
       allow write: if isDoctorOf(patientId);
     }
     
-    // 7. Doctor profiles
-    match /doctors/{doctorId} {
-      allow read: if isAuthenticated();
-      allow write: if isOwner(doctorId);
-    }
-
-    // 8. Pain Logs collection
+    // 5. Pain Logs collection
     match /pain_logs/{logId} {
       allow create: if isAuthenticated() && (
-        isDocOwner(request.resource.data) || isDocDoctor(request.resource.data)
+        request.resource.data.patientId == request.auth.uid || 
+        (request.resource.data.userId == request.auth.uid && request.resource.data.patientId == null)
       );
       allow read: if isAuthenticated() && (
-        isDocOwner(resource.data) || isDocDoctor(resource.data)
+        resource.data.patientId == request.auth.uid || 
+        (resource.data.userId == request.auth.uid && resource.data.patientId == null) ||
+        isDoctorOf(resource.data.patientId) ||
+        (resource.data.userId != null && isDoctorOf(resource.data.userId))
       );
       allow update, delete: if isAuthenticated() && (
-        isDocOwner(resource.data) || isDocDoctor(resource.data)
+        resource.data.patientId == request.auth.uid || 
+        (resource.data.userId == request.auth.uid && resource.data.patientId == null)
       );
     }
 
-    // 9. Appointments collection
+    // 6. Appointments collection
     match /appointments/{appointmentId} {
-      allow create: if isAuthenticated() && (
-        request.resource.data.patientId == request.auth.uid ||
-        isDoctorOf(request.resource.data.patientId)
-      );
+      allow create: if isAuthenticated();
       allow read: if isAuthenticated() && (
-        resource.data.patientId == request.auth.uid ||
-        resource.data.doctorId == request.auth.uid ||
-        isDoctorOf(resource.data.patientId)
-      );
-      allow update: if isAuthenticated() && (
-        resource.data.patientId == request.auth.uid ||
+        resource.data.patientId == request.auth.uid || 
         resource.data.doctorId == request.auth.uid
       );
-      allow delete: if isAuthenticated() && (
-        resource.data.patientId == request.auth.uid ||
+      allow update, delete: if isAuthenticated() && (
+        resource.data.patientId == request.auth.uid || 
         resource.data.doctorId == request.auth.uid
       );
     }
 
-    // 10. Messages collection
+    // 7. Messages collection
     match /messages/{messageId} {
-      allow create: if isAuthenticated() && (
-        request.resource.data.senderId == request.auth.uid ||
-        isDocDoctor(request.resource.data)
-      );
+      allow create: if isAuthenticated();
       allow read: if isAuthenticated() && (
-        resource.data.senderId == request.auth.uid ||
-        resource.data.receiverId == request.auth.uid
+        resource.data.senderId == request.auth.uid || 
+        resource.data.receiverId == request.auth.uid ||
+        (resource.data.participants != null && request.auth.uid in resource.data.participants) ||
+        (resource.data.chatId != null && resource.data.chatId.matches('.*' + request.auth.uid + '.*'))
       );
+      allow update, delete: if isAuthenticated() && (
+        resource.data.senderId == request.auth.uid ||
+        (resource.data.participants != null && request.auth.uid in resource.data.participants)
+      );
+    }
+    
+    // 8. Progress Photos
+    match /progress_photos/{photoId} {
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || 
+        isDoctorOf(resource.data.userId)
+      );
+    }
+
+    // 9. Medications collection
+    match /medications/{medicationId} {
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || 
+        isDoctorOf(resource.data.userId)
+      );
+      allow create: if isAuthenticated() && (
+        request.resource.data.userId == request.auth.uid ||
+        isDoctorOf(request.resource.data.userId)
+      );
+      allow update, delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || 
+        isDoctorOf(resource.data.userId)
+      );
+    }
+
+    // 10. Audit Logs
+    match /audit_logs/{logId} {
+      allow create: if isAuthenticated();
+      allow read: if false;
+    }
+    
+    // 11. Doctor Patients relationship matching
+    match /doctor_patients/{doctorId}/patients/{patientId} {
+      allow read, write: if request.auth.uid == doctorId || isOwner(patientId);
     }
   }
 }

@@ -31,7 +31,7 @@ const WorkoutSession = () => {
   const { user } = useAuth();
 
   const [sessionActive, setSessionActive] = useState(false);
-  const [currentExercise, setCurrentExercise] = useState('knee-bends');
+  const [currentExercise, setCurrentExercise] = useState(location.state?.exerciseId || 'knee-bends');
   const [repCount, setRepCount] = useState(0);
   const [currentAngle, setCurrentAngle] = useState(0);
   const [feedback, setFeedback] = useState('Position yourself in front of the camera');
@@ -66,7 +66,7 @@ const WorkoutSession = () => {
     let thresholdLow = 100;
     let thresholdHigh = 155;
 
-    if (currentExercise.includes('knee')) {
+    if (currentExercise.includes('knee') || currentExercise.includes('squat')) {
       primaryAngle = Math.min(angles.leftKnee || 180, angles.rightKnee || 180);
     } else if (currentExercise.includes('hip') || currentExercise.includes('march') || currentExercise.includes('leg')) {
       primaryAngle = Math.min(angles.leftHip || 180, angles.rightHip || 180);
@@ -103,10 +103,12 @@ const WorkoutSession = () => {
       setFrameData(frameDataRef.current);
     }
 
-    // Update current angle (knee angle for knee-bends)
-    const primaryAngle = angles.leftKnee || angles.rightKnee || 0;
-    setCurrentAngle(Math.round(primaryAngle));
-    angleHistoryRef.current.push(primaryAngle);
+    // Update current angle dynamically based on exercise
+    const primaryAngle = getPrimaryAngle(angles, currentExercise);
+    if (primaryAngle !== undefined) {
+      setCurrentAngle(Math.round(primaryAngle));
+      angleHistoryRef.current.push(primaryAngle);
+    }
 
     // Update feedback display
     if (rtFeedback) {
